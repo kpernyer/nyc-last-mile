@@ -1,6 +1,10 @@
 # NYC Last-Mile Delivery Analytics
 
+> **Epiroc Last-Mile Delivery Optimization AI & Data Hackathon**
+
 A Rust-based analytics platform for analyzing last-mile delivery performance, with an MCP (Model Context Protocol) server for conversational AI queries via Claude Desktop.
+
+Built for the Epiroc hackathon challenge to optimize last-mile delivery operations using AI-powered analytics and actionable insights.
 
 ## Features
 
