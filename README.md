@@ -6,14 +6,42 @@ A Rust-based analytics platform for analyzing last-mile delivery performance, wi
 
 Built for the Epiroc hackathon challenge to optimize last-mile delivery operations using AI-powered analytics and actionable insights.
 
+This is a snapshot of the Claude interaction. It highlights that it can not only use the frontier LLM model from Antrophic, but also the MCP server to query the analytics server.
+
+It has clustered lane behavior into 5 clusters, this analysis is reused for finding similarities between lanes.
+
+BTW I created fictional names for the carriers, lanes and locations to make it more interesting.
+
 ![Claude Desktop Demo](docs/images/claude-desktop-demo.png)
+
+## Sample Output & Results
+
+### Analytics Reports
+
+| Report | Question | Description |
+|--------|----------|-------------|
+| [Descriptive Analytics](./results/analytics-descriptive-results.md) | What is happening? | KPIs, OTD rates, volume trends, transit time distributions |
+| [Diagnostic Analytics](./results/analytics-diagnostic-results.md) | Why is it happening? | Carrier benchmarking, lane diagnostics, problem hotspots |
+| [Predictive Analytics](./results/analytics-predictive-results.md) | What will happen? | Delay probability, ETA factors, risk scoring, volume forecasting |
+| [Prescriptive Analytics](./results/analytics-prescriptive-results.md) | What should we do? | Carrier optimization, mode conversion, SLA recommendations |
+| [Clustering Analytics](./results/analytics-clustering-results.md) | How do lanes behave? | Lane behavioral clusters, playbooks, similarity analysis |
+
+### Demo Tools
+
+| Tool | Description |
+|------|-------------|
+| [Carrier Performance](./results/demo-carriers-results.md) | Top carriers by volume, best/worst on-time performance |
+| [Lane Analysis](./results/demo-lanes-results.md) | Lane dashboard, origin DCs, delivery regions, problem lanes |
+| [On-Time Delivery](./results/demo-otd-results.md) | OTD by day of week, mode, distance, monthly trends |
+| [Search Tool](./results/demo-search-results.md) | Interactive queries: carrier, lane, late/early shipments |
+| [Database Stats](./results/demo-stats-results.md) | Entity counts, OTD distribution, mode breakdown |
+
 
 ## Features
 
 - **Lane Clustering**: Automatically categorize shipping lanes into 5 behavioral clusters
 - **Performance Analytics**: Descriptive, diagnostic, predictive, and prescriptive analytics
 - **MCP Integration**: Query analytics conversationally through Claude Desktop
-- **SurrealDB Backend**: Fast embedded database with RocksDB storage
 
 ## Quick Start
 
@@ -26,7 +54,7 @@ Built for the Epiroc hackathon challenge to optimize last-mile delivery operatio
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/nyc-last-mile.git
+git clone https://github.com/kpernyer/nyc-last-mile.git
 cd nyc-last-mile
 
 # Build all binaries
@@ -45,6 +73,8 @@ cargo build --release
 ```bash
 # Descriptive analytics
 ./target/release/analytics_descriptive all
+
+
 
 # Lane clustering
 ./target/release/analytics_clustering clusters
@@ -94,6 +124,10 @@ The MCP server enables conversational queries like:
 See [docs/CLAUDE_DESKTOP_SETUP.md](docs/CLAUDE_DESKTOP_SETUP.md) for detailed instructions.
 
 ### Available MCP Tools
+
+These are examples of MCP tools that can be used to query the analytics server. The MCP server is a JSON-RPC server that can be used to query the analytics server.
+
+Looking further down the README you see all the available tools. 
 
 | Tool | Description |
 |------|-------------|
@@ -200,12 +234,5 @@ Each lane (origin ZIP3 → destination ZIP3) is analyzed for:
 
 MIT
 
-## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
 
-## Acknowledgments
-
-Built with Claude Code and Claude Desktop for AI-powered analytics exploration.
