@@ -4,8 +4,8 @@
 # Database files (large, local)
 /data/lastmile.db/
 
-# Raw data files (sensitive, large)
-/raw-data/*.csv
+# Raw data is included for reproducibility
+# /raw-data/*.csv
 
 # macOS
 .DS_Store
