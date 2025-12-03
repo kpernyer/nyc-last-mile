@@ -6,6 +6,8 @@ A Rust-based analytics platform for analyzing last-mile delivery performance, wi
 
 Built for the Epiroc hackathon challenge to optimize last-mile delivery operations using AI-powered analytics and actionable insights.
 
+![Claude Desktop Demo](docs/images/claude-desktop-demo.png)
+
 ## Features
 
 - **Lane Clustering**: Automatically categorize shipping lanes into 5 behavioral clusters
