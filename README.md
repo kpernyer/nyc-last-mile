@@ -2,305 +2,336 @@
 
 > **Epiroc Last-Mile Delivery Optimization AI & Data Hackathon**
 
-A Rust-based analytics platform for analyzing last-mile delivery performance, with an MCP (Model Context Protocol) server for conversational AI queries via Claude Desktop.
+An AI-powered analytics platform that transforms raw shipment data into actionable delivery insights. Ask questions in plain English through Claude Desktop and get instant answers about your logistics network.
 
-Built for the Epiroc hackathon challenge to optimize last-mile delivery operations using AI-powered analytics and actionable insights.
+**73,000 shipments • 970 lanes • 117 carriers • 5 behavioral clusters**
 
-This is a snapshot of the Claude interaction. It highlights that it can not only use the frontier LLM model from Antrophic, but also the MCP server to query the analytics server.
+---
 
-It has clustered lane behavior into 5 clusters, this analysis is reused for finding similarities between lanes.
+## 🎯 Talk to Your Data
 
-BTW I created fictional names for the carriers, lanes and locations to make it more interesting.
-
-## MCP Server for Claude Desktop
+Connect Claude Desktop to your delivery data and have a conversation:
 
 ```
-Example questions you could ask:
-
+"What's the state of our delivery network?"
 "Where are my biggest friction zones?"
 "Show me all systematically late lanes"
 "What's the playbook for high-jitter lanes?"
 "How is the Phoenix region performing?"
 "Are there lanes delivering too early that I could optimize?"
 "Compare performance of my Texas terminals"
+"If I want to improve on-time from 64% to 75%, where should I focus?"
 ```
 
-| Cluster example | Seasonal example |
-|--------|----------|
-|![Claude Cluster Demo](docs/images/claude-desktop-demo.png) | ![Claude Seasonal Demo](docs/images/claude-screen-seasonal.png) |
+| Cluster Analysis | Seasonal Patterns |
+|------------------|-------------------|
+| ![Claude Cluster Demo](docs/images/claude-desktop-demo.png) | ![Claude Seasonal Demo](docs/images/claude-screen-seasonal.png) |
 
+---
 
-## Sample Output & Results
+## 🚀 Quick Start
 
-### Analytics Reports
-
-| Report | Question | Description |
-|--------|----------|-------------|
-| [Descriptive Analytics](./results/analytics-descriptive-results.md) | What is happening? | KPIs, OTD rates, volume trends, transit time distributions |
-| [Diagnostic Analytics](./results/analytics-diagnostic-results.md) | Why is it happening? | Carrier benchmarking, lane diagnostics, problem hotspots |
-| [Predictive Analytics](./results/analytics-predictive-results.md) | What will happen? | Delay probability, ETA factors, risk scoring, volume forecasting |
-| [Prescriptive Analytics](./results/analytics-prescriptive-results.md) | What should we do? | Carrier optimization, mode conversion, SLA recommendations |
-| [Clustering Analytics](./results/analytics-clustering-results.md) | How do lanes behave? | Lane behavioral clusters, playbooks, similarity analysis |
-
-### Demo Tools
-
-| Tool | Description |
-|------|-------------|
-| [Carrier Performance](./results/demo-carriers-results.md) | Top carriers by volume, best/worst on-time performance |
-| [Lane Analysis](./results/demo-lanes-results.md) | Lane dashboard, origin DCs, delivery regions, problem lanes |
-| [On-Time Delivery](./results/demo-otd-results.md) | OTD by day of week, mode, distance, monthly trends |
-| [Search Tool](./results/demo-search-results.md) | Interactive queries: carrier, lane, late/early shipments |
-| [Database Stats](./results/demo-stats-results.md) | Entity counts, OTD distribution, mode breakdown |
-
-
-## Features
-
-- **Lane Clustering**: Automatically categorize shipping lanes into 5 behavioral clusters
-- **Performance Analytics**: Descriptive, diagnostic, predictive, and prescriptive analytics
-- **MCP Integration**: Query analytics conversationally through Claude Desktop
-
-## Quick Start
-
-### Prerequisites
-
-- Rust 1.70+ (install via [rustup](https://rustup.rs))
-- Claude Desktop (for MCP features) - [Download](https://claude.ai/download)
-
-### Installation
+### 1. Build Everything
 
 ```bash
-# Clone the repository
 git clone https://github.com/kpernyer/nyc-last-mile.git
 cd nyc-last-mile
-
-# Build all binaries
 cargo build --release
 ```
 
-### Ingest Sample Data
+### 2. Start the API Server
 
 ```bash
-# Place your CSV data in raw-data/
-./target/release/ingest raw-data/your-shipment-data.csv
+./target/release/api_server --rest-only
 ```
 
-### Run Analytics
+### 3. Configure Claude Desktop
 
-```bash
-# Descriptive analytics
-./target/release/analytics_descriptive all
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
-
-
-# Lane clustering
-./target/release/analytics_clustering clusters
-./target/release/analytics_clustering playbooks
-
-# Find similar lanes
-./target/release/analytics_clustering similar 750xx 857xx
+```json
+{
+  "mcpServers": {
+    "last-mile-analytics": {
+      "command": "/path/to/nyc-last-mile/target/release/mcp_server",
+      "args": [],
+      "env": {
+        "LASTMILE_API_URL": "http://localhost:8080"
+      }
+    }
+  }
+}
 ```
 
-## MCP Server for Claude Desktop
+### 4. Restart Claude Desktop and Ask Away!
 
-The MCP server enables conversational queries like:
-- "Which lanes are systematically late?"
-- "Where are we arriving too early?"
-- "How is the Phoenix region performing?"
+> "Give me an executive summary of our delivery network"
 
-### Setup
+---
 
-1. **Build the MCP server:**
-   ```bash
-   cargo build --release --bin mcp_server
-   ```
+## 📊 The Analytics
 
-2. **Copy database to sandbox-friendly location:**
-   ```bash
-   mkdir -p ~/Library/Application\ Support/LastMileAnalytics
-   cp -r data/lastmile.db ~/Library/Application\ Support/LastMileAnalytics/
-   ```
+### What Questions Can You Answer?
 
-3. **Configure Claude Desktop:**
+| Analytics Type | Question | What You Learn |
+|----------------|----------|----------------|
+| **Descriptive** | What is happening? | 64% on-time rate, 73K shipments, volume by mode |
+| **Diagnostic** | Why is it happening? | Carrier performance gaps, lane-level problems |
+| **Predictive** | What will happen? | Delay probability, risk scoring by lane |
+| **Prescriptive** | What should we do? | Carrier switches, SLA adjustments, playbooks |
+| **Clustering** | How do lanes behave? | 5 behavioral patterns with strategies |
 
-   Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
-   ```json
-   {
-     "mcpServers": {
-       "last-mile-analytics": {
-         "command": "/path/to/nyc-last-mile/target/release/mcp_server",
-         "args": [],
-         "cwd": "/path/to/nyc-last-mile"
-       }
-     }
-   }
-   ```
+### The 5 Lane Clusters
 
-4. **Restart Claude Desktop**
+The system automatically classifies your 970 shipping lanes into behavioral clusters:
 
-See [docs/CLAUDE_DESKTOP_SETUP.md](docs/CLAUDE_DESKTOP_SETUP.md) for detailed instructions.
+| Cluster | Lanes | Description | Strategy |
+|---------|-------|-------------|----------|
+| 🟢 **Early & Stable** | 74 | Consistently 0.5-2 days early | Hold-until policies, tighten SLA |
+| 🔵 **On-Time & Reliable** | 344 | High on-time, low variance | Benchmark these, protect capacity |
+| 🟡 **High-Jitter** | 38 | OK average, unpredictable | Add buffer days, no guarantees |
+| 🔴 **Systematically Late** | 73 | Consistently miss SLA | Downgrade promises, switch carriers |
+| ⚪ **Low Volume** | 3,903 | Insufficient data | Conservative buffers, monitor |
+
+### Sample Analytics Output
+
+| Report | Description |
+|--------|-------------|
+| [Descriptive Analytics](./results/analytics-descriptive-results.md) | KPIs, OTD rates, volume trends, transit distributions |
+| [Diagnostic Analytics](./results/analytics-diagnostic-results.md) | Carrier benchmarking, problem hotspots, variance analysis |
+| [Predictive Analytics](./results/analytics-predictive-results.md) | Delay probability, risk scoring, volume forecasting |
+| [Prescriptive Analytics](./results/analytics-prescriptive-results.md) | Optimization recommendations, SLA strategies |
+| [Clustering Analytics](./results/analytics-clustering-results.md) | Lane clusters, playbooks, similarity analysis |
+
+---
+
+## 🎬 Demo Script
+
+For a guided walkthrough, see **[docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)**
+
+### 5-Minute Demo Flow
+
+**Act 1 - The Big Picture**
+> "Give me an executive summary of our delivery network"
+
+**Act 2 - Find Problems**
+> "Where are our biggest friction zones?"
+> "Show me the lanes that are systematically late"
+
+**Act 3 - Hidden Opportunities**
+> "Are there lanes where we're arriving too early?"
+> "Rank our distribution centers by performance"
+
+**Act 4 - Get Recommendations**
+> "What's the playbook for our late lanes?"
+> "Find similar lanes to DFW→Denver so I can fix them all at once"
+
+**Act 5 - Strategic Planning**
+> "If I want to improve on-time from 64% to 75%, where should I focus first?"
+
+---
+
+## 🔌 MCP Server Architecture
+
+The Model Context Protocol (MCP) server lets Claude Desktop query your analytics in real-time:
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────┐     ┌──────────┐
+│ Claude Desktop  │────▶│   MCP Server    │────▶│ API Server  │────▶│ SurrealDB│
+│  (asks questions)│     │ (thin client)   │     │ (REST+gRPC) │     │ (cached) │
+└─────────────────┘     └─────────────────┘     └─────────────┘     └──────────┘
+```
 
 ### Available MCP Tools
 
-These are examples of MCP tools that can be used to query the analytics server. The MCP server is a JSON-RPC server that can be used to query the analytics server.
-
-Looking further down the README you see all the available tools. 
-
-| Tool | Description |
-|------|-------------|
-| `get_lane_clusters` | Get all 5 behavioral clusters with summary statistics |
+| Tool | What It Does |
+|------|--------------|
+| `get_lane_clusters` | Overview of all 5 behavioral clusters |
 | `get_lanes_in_cluster` | List lanes in a specific cluster |
-| `get_lane_profile` | Get metrics and cluster assignment for a lane |
-| `get_cluster_playbook` | Recommended last-mile strategy for a cluster |
-| `find_similar_lanes` | Find lanes with similar delivery patterns |
-| `get_early_delivery_analysis` | Analyze early delivery patterns |
-| `get_regional_performance` | Performance metrics for a ZIP3 region |
-| `get_friction_zones` | Identify high-friction problem destinations |
-| `get_terminal_performance` | Score terminals/DCs on outbound performance |
+| `get_lane_profile` | Deep dive on a specific route |
+| `get_cluster_playbook` | Recommended actions for a cluster |
+| `find_similar_lanes` | Find routes with similar patterns |
+| `get_early_delivery_analysis` | Identify over-performing lanes |
+| `get_regional_performance` | Geographic performance breakdown |
+| `get_friction_zones` | High-problem destinations |
+| `get_terminal_performance` | DC/warehouse benchmarking |
 
-## Lane Clusters
+---
 
-The system classifies shipping lanes into 5 behavioral clusters:
+## 📥 Data Pipeline: CSV → SurrealDB
 
-| Cluster | Description | Recommended Action |
-|---------|-------------|-------------------|
-| **Early & Stable** | Consistently 0.5-2 days early | Hold-until policies, tight delivery windows |
-| **On-Time & Reliable** | High on-time rate, low variance | Maintain operations, use as benchmark |
-| **High-Jitter** | OK average but unpredictable | Add buffer days, avoid guarantees |
-| **Systematically Late** | Consistently miss SLA | Downgrade promises, negotiate with carriers |
-| **Low Volume / Mixed** | Insufficient data | Conservative buffers, monitor growth |
-
-## Project Structure
+### How Data Flows
 
 ```
-nyc-last-mile/
-├── src/
-│   ├── bin/
-│   │   ├── ingest.rs              # Data ingestion
-│   │   ├── mcp_server.rs          # MCP server for Claude
-│   │   ├── analytics_descriptive.rs
-│   │   ├── analytics_diagnostic.rs
-│   │   ├── analytics_predictive.rs
-│   │   ├── analytics_prescriptive.rs
-│   │   ├── analytics_clustering.rs
-│   │   └── demo_*.rs              # Demo/exploration tools
-│   ├── lib.rs
-│   ├── models.rs                  # Data models
-│   ├── db.rs                      # Database connection
-│   ├── carrier_names.rs           # Carrier code lookups
-│   └── location_names.rs          # ZIP3 location mappings
-├── data/
-│   └── lastmile.db/               # SurrealDB database
-├── docs/
-│   ├── CLAUDE_DESKTOP_SETUP.md    # Claude Desktop setup guide
-│   ├── mcp-integration-plan.md    # MCP development plan
-│   └── claude-desktop-config.json # Sample config
-└── raw-data/                      # Source CSV files
+CSV File (raw shipments)
+    │
+    ▼
+┌─────────────────────────────────────────────────────────┐
+│  INGEST BINARY                                          │
+│  • Parses CSV with shipment records                     │
+│  • Calculates transit days, OTD status                  │
+│  • Extracts ZIP3 codes for origin/destination           │
+│  • Maps carrier codes to fictional names                │
+│  • Assigns distance buckets                             │
+└─────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────────┐
+│  SURREALDB (RocksDB backend)                            │
+│  • shipment table: 72,965 records                       │
+│  • carrier table: 117 carriers                          │
+│  • location table: 806 ZIP3 regions                     │
+│  • lane table: 970 origin→destination pairs             │
+└─────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────────┐
+│  API SERVER (cached queries)                            │
+│  • Aggregates lane metrics on first request             │
+│  • Assigns cluster IDs based on behavior                │
+│  • Caches results for fast subsequent queries           │
+└─────────────────────────────────────────────────────────┘
 ```
 
-## Analytics Binaries
-
-| Binary | Purpose |
-|--------|---------|
-| `ingest` | Load CSV shipment data into SurrealDB |
-| `analytics_descriptive` | Summary statistics, volume analysis |
-| `analytics_diagnostic` | Root cause analysis, variance decomposition |
-| `analytics_predictive` | Transit time predictions, risk scoring |
-| `analytics_prescriptive` | Recommendations, optimization suggestions |
-| `analytics_clustering` | Lane behavioral clustering |
-| `api_server` | Combined REST + gRPC API server |
-| `mcp_server` | MCP server for Claude Desktop integration |
-
-## API Server
-
-The API server provides both REST and gRPC interfaces to the analytics data.
-
-### Quick Start
+### Ingest Your Own Data
 
 ```bash
-# Start the API server
-./target/release/api_server
-
-# Or REST-only mode
-./target/release/api_server --rest-only
-
-# Or gRPC-only mode
-./target/release/api_server --grpc-only
+# CSV format: load_id, carrier, mode, ship_date, delivery_date, origin_zip, dest_zip, distance
+./target/release/ingest raw-data/your-shipment-data.csv
 ```
 
-### REST Endpoints
+The ingest process:
+1. **Parses** each row and validates data
+2. **Calculates** actual vs. goal transit days
+3. **Classifies** as Early/OnTime/Late
+4. **Extracts** ZIP3 codes (first 3 digits)
+5. **Creates** lane records (origin→destination)
+6. **Stores** everything in SurrealDB
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/v1/health` | Health check |
-| `GET /api/v1/stats` | Database statistics |
-| `GET /api/v1/lanes` | All lanes (with `?limit=N`) |
-| `GET /api/v1/lanes/:origin/:dest` | Lane profile |
-| `GET /api/v1/clusters` | All 5 behavioral clusters |
-| `GET /api/v1/clusters/:id/lanes` | Lanes in a cluster |
-| `GET /api/v1/clusters/:id/playbook` | Cluster recommendations |
-| `GET /api/v1/regions/:zip3` | Regional performance |
-| `GET /api/v1/analysis/friction` | High-friction zones |
-| `GET /api/v1/analysis/terminals` | Terminal/DC performance |
-| `GET /api/v1/analysis/early` | Early delivery patterns |
-| `GET /api/v1/search/similar?lane=X` | Similar lanes |
-
-### gRPC Service
-
-The gRPC service `lastmile.v1.AnalyticsService` provides the same functionality via protobuf. See `proto/lastmile/v1/analytics.proto` for the full service definition.
-
-### MCP Server with API Backend
-
-The MCP server now uses the API server as its backend:
-
-```bash
-# Start API server first
-./target/release/api_server &
-
-# Configure MCP server to use API
-export LASTMILE_API_URL=http://localhost:8080
-./target/release/mcp_server
-```
-
-## Data Model
-
-### Shipment Record
+### Shipment Data Model
 
 ```rust
 struct Shipment {
     load_id: String,
     carrier_mode: CarrierMode,      // LTL, Truckload, TL Flatbed, TL Dry
-    actual_ship: NaiveDateTime,
-    actual_delivery: NaiveDateTime,
+    actual_ship: DateTime,
+    actual_delivery: DateTime,
     goal_transit_days: i32,
     actual_transit_days: i32,
     otd: OtdDesignation,            // Early, OnTime, Late
-    ship_dow: i32,                  // Day of week
-    ship_week: i32,
-    ship_month: i32,
-    ship_year: i32,
-    distance_bucket: String,
+    origin_zip: String,             // ZIP3 code
+    dest_zip: String,               // ZIP3 code
+    distance_bucket: String,        // 0-100, 100-250, 250-500, etc.
 }
 ```
 
-### Lane Metrics
+---
 
-Each lane (origin ZIP3 → destination ZIP3) is analyzed for:
-- Volume
-- Average delay (days)
-- Transit variance
-- Early/On-time/Late rates
-- Cluster assignment
+## 🌐 REST API
 
-## Technology Stack
+The API server exposes all analytics via REST (and gRPC):
 
-- **Language**: Rust
-- **Database**: SurrealDB with RocksDB backend
-- **Protocol**: MCP (Model Context Protocol) via JSON-RPC over stdio
-- **AI Integration**: Claude Desktop
+```bash
+# Start the server
+./target/release/api_server --rest-only
 
-## License
+# Example queries
+curl http://localhost:8080/api/v1/stats
+curl http://localhost:8080/api/v1/clusters
+curl http://localhost:8080/api/v1/clusters/4/lanes  # Systematically late
+curl http://localhost:8080/api/v1/analysis/friction?limit=5
+curl http://localhost:8080/api/v1/regions/DEN
+```
+
+### Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/v1/health` | Health check |
+| `GET /api/v1/stats` | Network statistics |
+| `GET /api/v1/lanes` | All lanes with metrics |
+| `GET /api/v1/lanes/:origin/:dest` | Single lane profile |
+| `GET /api/v1/clusters` | All 5 clusters |
+| `GET /api/v1/clusters/:id/lanes` | Lanes in cluster |
+| `GET /api/v1/clusters/:id/playbook` | Recommendations |
+| `GET /api/v1/regions/:zip3` | Regional performance |
+| `GET /api/v1/analysis/friction` | Problem destinations |
+| `GET /api/v1/analysis/terminals` | DC performance |
+| `GET /api/v1/analysis/early` | Early delivery patterns |
+| `GET /api/v1/search/similar?lane=X` | Similar lanes |
+
+---
+
+## 🛠 All Binaries
+
+| Binary | Purpose |
+|--------|---------|
+| `ingest` | Load CSV → SurrealDB |
+| `api_server` | REST + gRPC API server |
+| `mcp_server` | Claude Desktop integration |
+| `analytics_descriptive` | What is happening? |
+| `analytics_diagnostic` | Why is it happening? |
+| `analytics_predictive` | What will happen? |
+| `analytics_prescriptive` | What should we do? |
+| `analytics_clustering` | How do lanes behave? |
+| `demo_stats` | Quick database overview |
+| `demo_carriers` | Carrier performance |
+| `demo_lanes` | Lane analysis |
+| `demo_otd` | On-time delivery analysis |
+| `demo_search` | Interactive search |
+
+---
+
+## 📁 Project Structure
+
+```
+nyc-last-mile/
+├── src/
+│   ├── bin/
+│   │   ├── ingest.rs              # CSV → SurrealDB
+│   │   ├── api_server.rs          # REST + gRPC server
+│   │   ├── mcp_server.rs          # Claude Desktop MCP
+│   │   ├── analytics_*.rs         # Analytics binaries
+│   │   └── demo_*.rs              # Demo tools
+│   ├── api/
+│   │   ├── mod.rs                 # API module
+│   │   ├── service.rs             # Shared business logic
+│   │   ├── handlers.rs            # REST handlers
+│   │   └── grpc.rs                # gRPC implementation
+│   ├── models.rs                  # Data models
+│   ├── db.rs                      # SurrealDB connection
+│   ├── carrier_names.rs           # Fictional carrier names
+│   └── location_names.rs          # ZIP3 → city mapping
+├── proto/
+│   └── lastmile/v1/analytics.proto  # gRPC definitions
+├── data/
+│   └── lastmile.db/               # SurrealDB database
+├── results/                       # Sample analytics output
+├── docs/
+│   ├── DEMO_SCRIPT.md             # Guided demo walkthrough
+│   └── CLAUDE_DESKTOP_SETUP.md    # Setup instructions
+└── raw-data/                      # Source CSV files
+```
+
+---
+
+## 🧰 Technology Stack
+
+| Component | Technology |
+|-----------|------------|
+| Language | Rust |
+| Database | SurrealDB (RocksDB backend) |
+| API | Axum (REST) + Tonic (gRPC) |
+| Protocol | MCP (Model Context Protocol) |
+| AI | Claude Desktop |
+| Serialization | Protobuf, JSON |
+
+---
+
+## 📄 License
 
 MIT
 
+---
 
-
+*Built for the Epiroc Last-Mile Delivery Optimization Hackathon*
