@@ -1,0 +1,21 @@
+# Build artifacts
+/target
+
+# Database files (large, local)
+/data/lastmile.db/
+
+# Raw data files (sensitive, large)
+/raw-data/*.csv
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local

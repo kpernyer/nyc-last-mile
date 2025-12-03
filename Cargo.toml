@@ -1,0 +1,68 @@
+[package]
+name = "nyc_last_mile"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+surrealdb = { version = "2", features = ["kv-rocksdb"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+csv = "1"
+chrono = { version = "0.4", features = ["serde"] }
+serde_json = "1"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# MCP Server dependencies (using simple JSON-RPC implementation)
+
+[[bin]]
+name = "ingest"
+path = "src/bin/ingest.rs"
+
+[[bin]]
+name = "nyc_last_mile"
+path = "src/main.rs"
+
+[[bin]]
+name = "demo_stats"
+path = "src/bin/demo_stats.rs"
+
+[[bin]]
+name = "demo_carriers"
+path = "src/bin/demo_carriers.rs"
+
+[[bin]]
+name = "demo_lanes"
+path = "src/bin/demo_lanes.rs"
+
+[[bin]]
+name = "demo_otd"
+path = "src/bin/demo_otd.rs"
+
+[[bin]]
+name = "demo_search"
+path = "src/bin/demo_search.rs"
+
+[[bin]]
+name = "analytics_descriptive"
+path = "src/bin/analytics_descriptive.rs"
+
+[[bin]]
+name = "analytics_diagnostic"
+path = "src/bin/analytics_diagnostic.rs"
+
+[[bin]]
+name = "analytics_predictive"
+path = "src/bin/analytics_predictive.rs"
+
+[[bin]]
+name = "analytics_prescriptive"
+path = "src/bin/analytics_prescriptive.rs"
+
+[[bin]]
+name = "analytics_clustering"
+path = "src/bin/analytics_clustering.rs"
+
+[[bin]]
+name = "mcp_server"
+path = "src/bin/mcp_server.rs"

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "last-mile-analytics": {
+      "command": "/Users/kpernyer/repo/nyc-last-mile/target/release/mcp_server",
+      "args": [],
+      "cwd": "/Users/kpernyer/repo/nyc-last-mile"
+    }
+  }
+}
