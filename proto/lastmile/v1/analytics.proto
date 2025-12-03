@@ -1,0 +1,234 @@
+syntax = "proto3";
+
+package lastmile.v1;
+
+// Lane metrics with cluster assignment
+message LaneMetrics {
+  string origin_zip = 1;
+  string dest_zip = 2;
+  string route = 3;           // Formatted route (e.g., "DFW→TUS")
+  int64 volume = 4;
+  double avg_delay = 5;
+  double transit_variance = 6;
+  double early_rate = 7;
+  double on_time_rate = 8;
+  double late_rate = 9;
+  uint32 cluster_id = 10;
+  string cluster_name = 11;
+}
+
+// Cluster summary
+message Cluster {
+  uint32 id = 1;
+  string name = 2;
+  string description = 3;
+  int64 lane_count = 4;
+  int64 total_volume = 5;
+  double avg_delay = 6;
+  double avg_late_rate = 7;
+}
+
+// Cluster playbook with recommendations
+message Playbook {
+  uint32 cluster_id = 1;
+  string cluster_name = 2;
+  string description = 3;
+  repeated string actions = 4;
+}
+
+// Friction zone (problem destination)
+message FrictionZone {
+  string dest_zip = 1;
+  string location = 2;
+  double friction_score = 3;
+  double late_rate = 4;
+  double transit_variance = 5;
+  int64 volume = 6;
+  int64 lane_count = 7;
+}
+
+// Terminal/DC performance
+message TerminalPerformance {
+  string origin_zip = 1;
+  string terminal = 2;
+  double performance_score = 3;
+  double on_time_rate = 4;
+  double late_rate = 5;
+  double early_rate = 6;
+  int64 volume = 7;
+  int64 lane_count = 8;
+}
+
+// Regional cluster breakdown
+message ClusterBreakdown {
+  string cluster = 1;
+  int64 lane_count = 2;
+  int64 volume = 3;
+}
+
+// Regional performance summary
+message RegionalSummary {
+  int64 total_lanes = 1;
+  int64 total_volume = 2;
+  double avg_late_rate = 3;
+  double avg_early_rate = 4;
+  double avg_delay = 5;
+}
+
+// Early delivery destination
+message EarlyDestination {
+  string dest_zip = 1;
+  string location = 2;
+  double early_rate = 3;
+  double avg_days_early = 4;
+  int64 early_shipments = 5;
+  int64 volume = 6;
+}
+
+// Database statistics
+message Stats {
+  int64 total_shipments = 1;
+  int64 total_lanes = 2;
+  int64 total_carriers = 3;
+  int64 total_locations = 4;
+  double overall_on_time_rate = 5;
+  double overall_late_rate = 6;
+  double overall_early_rate = 7;
+}
+
+// ============================================================================
+// Request/Response Messages
+// ============================================================================
+
+message Empty {}
+
+message GetLanesRequest {
+  optional uint32 cluster_id = 1;  // Filter by cluster
+  optional int32 limit = 2;        // Max results
+}
+
+message GetLanesResponse {
+  repeated LaneMetrics lanes = 1;
+}
+
+message GetLaneRequest {
+  string origin = 1;
+  string dest = 2;
+}
+
+message GetLaneResponse {
+  LaneMetrics lane = 1;
+  string error = 2;
+}
+
+message GetClustersRequest {}
+
+message GetClustersResponse {
+  repeated Cluster clusters = 1;
+}
+
+message GetClusterLanesRequest {
+  uint32 cluster_id = 1;
+  int32 limit = 2;
+}
+
+message GetClusterLanesResponse {
+  repeated LaneMetrics lanes = 1;
+}
+
+message GetPlaybookRequest {
+  uint32 cluster_id = 1;
+}
+
+message GetPlaybookResponse {
+  Playbook playbook = 1;
+}
+
+message GetRegionRequest {
+  string zip3 = 1;
+}
+
+message GetRegionResponse {
+  string region = 1;
+  RegionalSummary summary = 2;
+  repeated ClusterBreakdown cluster_breakdown = 3;
+  repeated LaneMetrics highest_friction_lanes = 4;
+  string error = 5;
+}
+
+message GetFrictionZonesRequest {
+  int32 limit = 1;
+}
+
+message GetFrictionZonesResponse {
+  repeated FrictionZone zones = 1;
+  repeated string recommendations = 2;
+}
+
+message GetTerminalsRequest {
+  int32 limit = 1;
+}
+
+message GetTerminalsResponse {
+  int64 total_terminals = 1;
+  int64 total_volume = 2;
+  double average_score = 3;
+  repeated TerminalPerformance top_performers = 4;
+  repeated TerminalPerformance needs_improvement = 5;
+  repeated string recommendations = 6;
+}
+
+message GetEarlyAnalysisRequest {}
+
+message GetEarlyAnalysisResponse {
+  int64 total_shipments = 1;
+  int64 early_shipments = 2;
+  double early_rate = 3;
+  repeated EarlyDestination top_destinations = 4;
+  repeated string recommendations = 5;
+}
+
+message FindSimilarRequest {
+  string pattern = 1;
+  int32 limit = 2;
+}
+
+message FindSimilarResponse {
+  LaneMetrics target_lane = 1;
+  repeated LaneMetrics similar_lanes = 2;
+  string shared_playbook = 3;
+  string error = 4;
+}
+
+message GetStatsRequest {}
+
+message GetStatsResponse {
+  Stats stats = 1;
+}
+
+// ============================================================================
+// Analytics Service
+// ============================================================================
+
+service AnalyticsService {
+  // Lane operations
+  rpc GetLanes(GetLanesRequest) returns (GetLanesResponse);
+  rpc GetLane(GetLaneRequest) returns (GetLaneResponse);
+
+  // Cluster operations
+  rpc GetClusters(GetClustersRequest) returns (GetClustersResponse);
+  rpc GetClusterLanes(GetClusterLanesRequest) returns (GetClusterLanesResponse);
+  rpc GetPlaybook(GetPlaybookRequest) returns (GetPlaybookResponse);
+
+  // Regional analysis
+  rpc GetRegion(GetRegionRequest) returns (GetRegionResponse);
+  rpc GetFrictionZones(GetFrictionZonesRequest) returns (GetFrictionZonesResponse);
+  rpc GetTerminals(GetTerminalsRequest) returns (GetTerminalsResponse);
+
+  // Delivery analysis
+  rpc GetEarlyAnalysis(GetEarlyAnalysisRequest) returns (GetEarlyAnalysisResponse);
+  rpc FindSimilar(FindSimilarRequest) returns (FindSimilarResponse);
+
+  // Statistics
+  rpc GetStats(GetStatsRequest) returns (GetStatsResponse);
+}

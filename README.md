@@ -12,7 +12,23 @@ It has clustered lane behavior into 5 clusters, this analysis is reused for find
 
 BTW I created fictional names for the carriers, lanes and locations to make it more interesting.
 
-![Claude Desktop Demo](docs/images/claude-desktop-demo.png)
+## MCP Server for Claude Desktop
+
+```
+Example questions you could ask:
+
+"Where are my biggest friction zones?"
+"Show me all systematically late lanes"
+"What's the playbook for high-jitter lanes?"
+"How is the Phoenix region performing?"
+"Are there lanes delivering too early that I could optimize?"
+"Compare performance of my Texas terminals"
+```
+
+| Cluster example | Seasonal example |
+|--------|----------|
+|![Claude Cluster Demo](docs/images/claude-desktop-demo.png) | ![Claude Seasonal Demo](docs/images/claude-screen-seasonal.png) |
+
 
 ## Sample Output & Results
 
@@ -191,7 +207,59 @@ nyc-last-mile/
 | `analytics_predictive` | Transit time predictions, risk scoring |
 | `analytics_prescriptive` | Recommendations, optimization suggestions |
 | `analytics_clustering` | Lane behavioral clustering |
+| `api_server` | Combined REST + gRPC API server |
 | `mcp_server` | MCP server for Claude Desktop integration |
+
+## API Server
+
+The API server provides both REST and gRPC interfaces to the analytics data.
+
+### Quick Start
+
+```bash
+# Start the API server
+./target/release/api_server
+
+# Or REST-only mode
+./target/release/api_server --rest-only
+
+# Or gRPC-only mode
+./target/release/api_server --grpc-only
+```
+
+### REST Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/v1/health` | Health check |
+| `GET /api/v1/stats` | Database statistics |
+| `GET /api/v1/lanes` | All lanes (with `?limit=N`) |
+| `GET /api/v1/lanes/:origin/:dest` | Lane profile |
+| `GET /api/v1/clusters` | All 5 behavioral clusters |
+| `GET /api/v1/clusters/:id/lanes` | Lanes in a cluster |
+| `GET /api/v1/clusters/:id/playbook` | Cluster recommendations |
+| `GET /api/v1/regions/:zip3` | Regional performance |
+| `GET /api/v1/analysis/friction` | High-friction zones |
+| `GET /api/v1/analysis/terminals` | Terminal/DC performance |
+| `GET /api/v1/analysis/early` | Early delivery patterns |
+| `GET /api/v1/search/similar?lane=X` | Similar lanes |
+
+### gRPC Service
+
+The gRPC service `lastmile.v1.AnalyticsService` provides the same functionality via protobuf. See `proto/lastmile/v1/analytics.proto` for the full service definition.
+
+### MCP Server with API Backend
+
+The MCP server now uses the API server as its backend:
+
+```bash
+# Start API server first
+./target/release/api_server &
+
+# Configure MCP server to use API
+export LASTMILE_API_URL=http://localhost:8080
+./target/release/mcp_server
+```
 
 ## Data Model
 
