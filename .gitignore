@@ -1,9 +1,6 @@
 # Build artifacts
 /target
 
-# Database files (large, local)
-/data/lastmile.db/
-
 # Raw data is included for reproducibility
 # /raw-data/*.csv
 
