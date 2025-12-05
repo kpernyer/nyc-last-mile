@@ -34,6 +34,7 @@ use axum::{
 };
 use nyc_last_mile::api::{
     handlers,
+    graph_handlers,
     grpc::GrpcService,
     proto::analytics_service_server::AnalyticsServiceServer,
     AnalyticsService,
@@ -72,6 +73,13 @@ fn print_banner(port: u16, rest_only: bool, grpc_only: bool) {
         println!("  GET /api/v1/analysis/terminals  Terminal perf");
         println!("  GET /api/v1/analysis/early      Early analysis");
         println!("  GET /api/v1/search/similar      Similar lanes");
+        println!();
+        println!("Graph Endpoints:");
+        println!("  GET /api/v1/graph/topology           Network topology");
+        println!("  GET /api/v1/graph/carrier/:id/network  Carrier network");
+        println!("  GET /api/v1/graph/location/:zip5/connections  Location links");
+        println!("  GET /api/v1/graph/location/:zip5/reachable    Reachable dests");
+        println!("  GET /api/v1/graph/shipment/:id/trace  Trace shipment");
         println!();
     }
     if !rest_only {
@@ -217,6 +225,12 @@ fn create_rest_router(service: Arc<AnalyticsService>) -> Router {
         .route("/api/v1/analysis/early", get(handlers::get_early_analysis))
         // Search
         .route("/api/v1/search/similar", get(handlers::find_similar))
+        // Graph endpoints
+        .route("/api/v1/graph/topology", get(graph_handlers::get_network_topology))
+        .route("/api/v1/graph/carrier/:carrier_id/network", get(graph_handlers::get_carrier_network))
+        .route("/api/v1/graph/location/:zip5/connections", get(graph_handlers::get_location_connections))
+        .route("/api/v1/graph/location/:zip5/reachable", get(graph_handlers::get_reachable_destinations))
+        .route("/api/v1/graph/shipment/:load_id/trace", get(graph_handlers::trace_shipment))
         // State and middleware
         .with_state(service)
         .layer(TraceLayer::new_for_http())

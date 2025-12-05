@@ -13,6 +13,8 @@ serde_json = "1"
 anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4", features = ["derive"] }
+rand = "0.8"
 
 # API Server dependencies
 tonic = "0.12"
@@ -84,3 +86,39 @@ path = "src/bin/mcp_server.rs"
 [[bin]]
 name = "api_server"
 path = "src/bin/api_server.rs"
+
+[[bin]]
+name = "perf_test"
+path = "src/bin/perf_test.rs"
+
+[[bin]]
+name = "ingest_enhanced"
+path = "src/bin/ingest_enhanced.rs"
+
+[[bin]]
+name = "perf_test_enhanced"
+path = "src/bin/perf_test_enhanced.rs"
+
+[[bin]]
+name = "demo_vector_search"
+path = "src/bin/demo_vector_search.rs"
+
+[[bin]]
+name = "demo_similarity_metrics"
+path = "src/bin/demo_similarity_metrics.rs"
+
+[[bin]]
+name = "benchmark_vector_native"
+path = "src/bin/benchmark_vector_native.rs"
+
+[[bin]]
+name = "generate_synthetic"
+path = "src/bin/generate_synthetic.rs"
+
+[[bin]]
+name = "ingest_synthetic"
+path = "src/bin/ingest_synthetic.rs"
+
+[[bin]]
+name = "add_graph_edges"
+path = "src/bin/add_graph_edges.rs"

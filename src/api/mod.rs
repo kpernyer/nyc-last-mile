@@ -10,6 +10,7 @@ pub mod proto {
 
 pub mod service;
 pub mod handlers;
+pub mod graph_handlers;
 pub mod grpc;
 
 pub use service::AnalyticsService;

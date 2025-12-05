@@ -140,3 +140,109 @@ impl CsvRecord {
         })
     }
 }
+
+/// Extended CSV record with ZIP5 fields from synthetic data generator
+#[derive(Debug, Deserialize)]
+pub struct SyntheticCsvRecord {
+    pub carrier_mode: String,
+    pub actual_ship: String,
+    pub actual_delivery: String,
+    pub carrier_posted_service_days: Option<f64>,
+    pub customer_distance: Option<f64>,
+    pub truckload_service_days: Option<f64>,
+    pub all_modes_goal_transit_days: i32,
+    pub actual_transit_days: i32,
+    pub otd_designation: String,
+    pub load_id_pseudo: String,
+    pub carrier_pseudo: String,
+    pub origin_zip_3d: String,
+    pub dest_zip_3d: String,
+    pub origin_zip5: String,
+    pub dest_zip5: String,
+    pub ship_dow: i32,
+    pub ship_week: i32,
+    pub ship_month: i32,
+    pub ship_year: i32,
+    pub lane_zip3_pair: String,
+    pub lane_zip5_pair: String,
+    pub lane_id: String,
+    pub distance_bucket: String,
+    pub is_synthetic: bool,
+}
+
+/// Extended shipment with ZIP5 data
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShipmentExtended {
+    pub load_id: String,
+    pub carrier_mode: CarrierMode,
+    pub actual_ship: NaiveDateTime,
+    pub actual_delivery: NaiveDateTime,
+    pub carrier_posted_service_days: Option<f64>,
+    pub customer_distance: Option<f64>,
+    pub truckload_service_days: Option<f64>,
+    pub goal_transit_days: i32,
+    pub actual_transit_days: i32,
+    pub otd: OtdDesignation,
+    pub ship_dow: i32,
+    pub ship_week: i32,
+    pub ship_month: i32,
+    pub ship_year: i32,
+    pub distance_bucket: String,
+    pub origin_zip5: String,
+    pub dest_zip5: String,
+    pub is_synthetic: bool,
+}
+
+/// ZIP5 location entity
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Location5 {
+    pub zip5: String,
+    pub zip3: String,
+    pub state: Option<String>,
+}
+
+/// Lane at ZIP5 level
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Lane5 {
+    pub lane_id: String,
+    pub zip5_pair: String,
+    pub zip3_pair: String,
+}
+
+impl SyntheticCsvRecord {
+    pub fn to_shipment_extended(&self) -> anyhow::Result<ShipmentExtended> {
+        let actual_ship = NaiveDateTime::parse_from_str(&self.actual_ship, "%Y-%m-%d %H:%M:%S")?;
+        let actual_delivery =
+            NaiveDateTime::parse_from_str(&self.actual_delivery, "%Y-%m-%d %H:%M:%S")?;
+
+        Ok(ShipmentExtended {
+            load_id: self.load_id_pseudo.clone(),
+            carrier_mode: CarrierMode::from(self.carrier_mode.as_str()),
+            actual_ship,
+            actual_delivery,
+            carrier_posted_service_days: self.carrier_posted_service_days,
+            customer_distance: self.customer_distance,
+            truckload_service_days: self.truckload_service_days,
+            goal_transit_days: self.all_modes_goal_transit_days,
+            actual_transit_days: self.actual_transit_days,
+            otd: OtdDesignation::from(self.otd_designation.as_str()),
+            ship_dow: self.ship_dow,
+            ship_week: self.ship_week,
+            ship_month: self.ship_month,
+            ship_year: self.ship_year,
+            distance_bucket: self.distance_bucket.clone(),
+            origin_zip5: self.origin_zip5.clone(),
+            dest_zip5: self.dest_zip5.clone(),
+            is_synthetic: self.is_synthetic,
+        })
+    }
+
+    /// Get the ZIP3 from a ZIP5 code
+    pub fn zip5_to_zip3(zip5: &str) -> String {
+        if zip5.len() >= 3 {
+            format!("{}xx", &zip5[..3])
+        } else {
+            zip5.to_string()
+        }
+    }
+}

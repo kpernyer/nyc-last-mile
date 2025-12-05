@@ -1,0 +1,101 @@
+[2m2025-12-04T16:39:03.929817Z[0m [32m INFO[0m [2mbenchmark_vector_native[0m[2m:[0m Connecting to SurrealDB at data/lastmile_enhanced.db
+[2m2025-12-04T16:39:03.930624Z[0m [32m INFO[0m [2msurrealdb::core::kvs::ds[0m[2m:[0m Starting kvs store at rocksdb://data/lastmile_enhanced.db
+[2m2025-12-04T16:39:03.930963Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Background thread count: 10
+[2m2025-12-04T16:39:03.931099Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Maximum background jobs count: 20
+[2m2025-12-04T16:39:03.931118Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Maximum number of open files: 1024
+[2m2025-12-04T16:39:03.931120Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Number of log files to keep: 10
+[2m2025-12-04T16:39:03.942314Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Maximum write buffers: 8
+[2m2025-12-04T16:39:03.949942Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Write buffer size: 134217728
+[2m2025-12-04T16:39:03.949967Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Target file size for compaction: 67108864
+[2m2025-12-04T16:39:03.949969Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Target file size compaction multiplier: 2
+[2m2025-12-04T16:39:03.949970Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Minimum write buffers to merge: 2
+[2m2025-12-04T16:39:03.949972Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Number of files to trigger compaction: 4
+[2m2025-12-04T16:39:03.956332Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Compaction readahead size: 16777216
+[2m2025-12-04T16:39:03.956341Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Maximum concurrent subcompactions: 4
+[2m2025-12-04T16:39:03.956342Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Use separate thread queues: true
+[2m2025-12-04T16:39:03.956343Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Enable separation of keys and values: true
+[2m2025-12-04T16:39:03.956344Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Minimum blob value size: 4096
+[2m2025-12-04T16:39:03.956345Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Target blob file size: 268435456
+[2m2025-12-04T16:39:03.956346Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Enable blob garbage collection: false
+[2m2025-12-04T16:39:03.956348Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Blob GC age cutoff: 0.25
+[2m2025-12-04T16:39:03.956351Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Blob GC force threshold: 1
+[2m2025-12-04T16:39:03.956352Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Blob compaction readahead size: 0
+[2m2025-12-04T16:39:03.956353Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Write-ahead-log file size limit: 0MB
+[2m2025-12-04T16:39:03.956353Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Allow concurrent memtable writes: true
+[2m2025-12-04T16:39:03.956354Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Avoid unnecessary blocking IO: true
+[2m2025-12-04T16:39:03.956355Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Allow adaptive write thread yielding: true
+[2m2025-12-04T16:39:03.956356Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Wait for disk sync acknowledgement: false
+[2m2025-12-04T16:39:03.963278Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Block cache size: 16106127360
+[2m2025-12-04T16:39:03.963379Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Enable memory-mapped reads: false
+[2m2025-12-04T16:39:03.963405Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Enable memory-mapped writes: false
+[2m2025-12-04T16:39:03.963409Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Setting delete compaction factory: 1000 / 50 (0.5)
+[2m2025-12-04T16:39:03.963412Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Setting compaction style: level
+[2m2025-12-04T16:39:03.963414Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Setting compression level
+[2m2025-12-04T16:39:03.963415Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Setting storage engine log level: warn
+[2m2025-12-04T16:39:03.963416Z[0m [32m INFO[0m [2msurrealdb::core::kvs::rocksdb[0m[2m:[0m Background write-ahead-log flushing: disabled
+[2m2025-12-04T16:39:03.983227Z[0m [32m INFO[0m [2msurrealdb::core::kvs::ds[0m[2m:[0m Started kvs store at rocksdb://data/lastmile_enhanced.db
+
+══════════════════════════════════════════════════════════════
+  Native HNSW vs Application-Side Vector Search Benchmark
+══════════════════════════════════════════════════════════════
+
+[2m2025-12-04T16:39:03.994165Z[0m [32m INFO[0m [2mbenchmark_vector_native[0m[2m:[0m Step 1: Computing carrier performance vectors...
+
+Found 33 carriers with >10 shipments
+Stored 33 carrier vectors in 1740.42ms
+
+[2m2025-12-04T16:39:05.734633Z[0m [32m INFO[0m [2mbenchmark_vector_native[0m[2m:[0m Step 2: Creating HNSW indexes...
+
+  ✓ Created HNSW index with EUCLIDEAN distance
+  ✓ Created HNSW index with COSINE distance
+  ✓ Created HNSW index with MANHATTAN distance
+
+[2m2025-12-04T16:39:05.734909Z[0m [32m INFO[0m [2mbenchmark_vector_native[0m[2m:[0m Step 3: Loading carrier vectors for comparison...
+
+Loaded 33 carriers with vectors
+
+Reference carrier: carrier:f5f26adba0a6
+  Vector: [1.0000, 0.2774, 0.3465, 0.1986]
+  OTD: 0.0%, Volume: 0
+
+══════════════════════════════════════════════════════════════
+  BENCHMARK: Application-Side Distance Calculations
+══════════════════════════════════════════════════════════════
+
+  EUCLIDEAN (app-side):  0.0005 ms/query
+  COSINE (app-side):     0.0004 ms/query
+  MANHATTAN (app-side):  0.0003 ms/query
+
+══════════════════════════════════════════════════════════════
+  BENCHMARK: Native SurrealDB HNSW Queries
+══════════════════════════════════════════════════════════════
+
+  EUCLIDEAN (native):    1.5840 ms/query
+  COSINE (native):       1.5753 ms/query
+  MANHATTAN (native):    1.7009 ms/query
+
+══════════════════════════════════════════════════════════════
+  BENCHMARK: SQL-Based Distance (No Index)
+══════════════════════════════════════════════════════════════
+
+  EUCLIDEAN (SQL):       1.6597 ms/query
+
+══════════════════════════════════════════════════════════════
+  SUMMARY
+══════════════════════════════════════════════════════════════
+
+| Metric | Method | Time (ms) | Speedup |
+|--------|--------|-----------|---------|
+| Euclidean | Application | 0.0005 | baseline |
+| Euclidean | Native HNSW | 1.5840 | 0.00x |
+| Euclidean | SQL Brute | 1.6597 | 0.00x |
+| Cosine | Application | 0.0004 | baseline |
+| Cosine | Native HNSW | 1.5753 | 0.00x |
+| Manhattan | Application | 0.0003 | baseline |
+| Manhattan | Native HNSW | 1.7009 | 0.00x |
+
+📊 Notes:
+   • Application-side: All data loaded into memory, computed in Rust
+   • Native HNSW: Uses SurrealDB's built-in HNSW index (approximate)
+   • SQL Brute Force: Computes distance in SurrealQL (no index)
+   • 33 carriers with vectors, 100 iterations per benchmark

@@ -4,10 +4,20 @@
 
 use anyhow::Result;
 use crate::{db, location_names::format_lane_short};
+use crate::carrier_names::get_carrier_name;
+use crate::location_names::get_location_long;
 use serde::Deserialize;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use std::collections::HashMap;
+
+// Re-export graph response types
+pub use super::graph_handlers::{
+    CarrierNetworkResponse, CarrierLane, LocationConnectionsResponse, ConnectionStats, Connection,
+    NetworkTopologyResponse, NodeCounts, EdgeCounts, NetworkDensity,
+    ShipmentTraceResponse, ShipmentInfo, CarrierInfo, LocationInfo, LaneInfo,
+    ReachableDestinationsResponse, ReachableDestination,
+};
 
 // ============================================================================
 // Data Structures
@@ -260,8 +270,8 @@ impl AnalyticsService {
         let lanes_raw: Vec<LaneMetricsRaw> = db
             .query(r#"
                 SELECT
-                    origin_zip,
-                    dest_zip,
+                    ->origin_at->location.zip3 as origin_zip,
+                    ->dest_at->location.zip3 as dest_zip,
                     count() as volume,
                     math::mean(actual_transit_days - goal_transit_days) as avg_delay,
                     math::variance(actual_transit_days) as transit_variance,
@@ -269,7 +279,7 @@ impl AnalyticsService {
                     count(IF otd = "OnTime" THEN 1 END) as ontime_count,
                     count(IF otd = "Late" THEN 1 END) as late_count
                 FROM shipment
-                GROUP BY origin_zip, dest_zip
+                GROUP BY ->origin_at->location.zip3, ->dest_at->location.zip3
             "#)
             .await?
             .take(0)?;
@@ -646,6 +656,425 @@ impl AnalyticsService {
             overall_on_time_rate: (overall_on_time_rate * 10.0).round() / 10.0,
             overall_late_rate: (overall_late_rate * 10.0).round() / 10.0,
             overall_early_rate: (overall_early_rate * 10.0).round() / 10.0,
+        })
+    }
+
+    // ========================================================================
+    // Graph-Oriented Methods
+    // ========================================================================
+
+    /// Get a carrier's operational network - lanes served, volume, and performance
+    pub async fn get_carrier_network(&self, carrier_id: &str, limit: usize) -> Result<CarrierNetworkResponse> {
+        let db = db::connect(&self.db_path).await?;
+        let carrier_id_owned = carrier_id.to_string();
+
+        #[derive(Debug, Deserialize)]
+        struct LaneData {
+            lane_zip5_pair: String,
+            origin_zip5: String,
+            dest_zip5: String,
+            volume: i64,
+            ontime_count: i64,
+            avg_transit: f64,
+        }
+
+        let lanes: Vec<LaneData> = db
+            .query(r#"
+                SELECT
+                    lane_zip5_pair,
+                    origin_zip5,
+                    dest_zip5,
+                    count() as volume,
+                    count(IF otd = "OnTime" THEN 1 END) as ontime_count,
+                    math::mean(actual_transit_days) as avg_transit
+                FROM shipment
+                WHERE carrier_ref = $carrier_id
+                GROUP BY lane_zip5_pair, origin_zip5, dest_zip5
+                ORDER BY volume DESC
+                LIMIT $limit
+            "#)
+            .bind(("carrier_id", carrier_id_owned.clone()))
+            .bind(("limit", limit))
+            .await?
+            .take(0)?;
+
+        let total_shipments: Option<i64> = db
+            .query("SELECT count() FROM shipment WHERE carrier_ref = $carrier_id GROUP ALL")
+            .bind(("carrier_id", carrier_id_owned))
+            .await?
+            .take("count")?;
+
+        let mut origins: Vec<String> = lanes.iter().map(|l| l.origin_zip5.clone()).collect();
+        let mut destinations: Vec<String> = lanes.iter().map(|l| l.dest_zip5.clone()).collect();
+        origins.sort();
+        origins.dedup();
+        destinations.sort();
+        destinations.dedup();
+
+        let top_lanes: Vec<CarrierLane> = lanes
+            .iter()
+            .map(|l| {
+                let otd_rate = if l.volume > 0 {
+                    l.ontime_count as f64 / l.volume as f64
+                } else {
+                    0.0
+                };
+                CarrierLane {
+                    lane: l.lane_zip5_pair.clone(),
+                    origin: get_location_long(&l.origin_zip5),
+                    destination: get_location_long(&l.dest_zip5),
+                    volume: l.volume,
+                    otd_rate: (otd_rate * 1000.0).round() / 10.0,
+                    avg_transit: (l.avg_transit * 10.0).round() / 10.0,
+                }
+            })
+            .collect();
+
+        Ok(CarrierNetworkResponse {
+            carrier_id: carrier_id.to_string(),
+            display_name: get_carrier_name(carrier_id),
+            total_shipments: total_shipments.unwrap_or(0),
+            total_lanes: lanes.len(),
+            origins,
+            destinations,
+            top_lanes,
+        })
+    }
+
+    /// Get location connections - what ZIP5s are connected inbound/outbound
+    pub async fn get_location_connections(&self, zip5: &str, direction: &str, limit: usize) -> Result<LocationConnectionsResponse> {
+        let db = db::connect(&self.db_path).await?;
+        let zip5_owned = zip5.to_string();
+
+        #[derive(Debug, Deserialize)]
+        struct ConnectionData {
+            zip5: String,
+            volume: i64,
+            ontime_count: i64,
+        }
+
+        // Outbound connections (this ZIP5 as origin)
+        let outbound_data: Vec<ConnectionData> = if direction == "both" || direction == "outbound" {
+            db.query(r#"
+                SELECT
+                    dest_zip5 as zip5,
+                    count() as volume,
+                    count(IF otd = "OnTime" THEN 1 END) as ontime_count
+                FROM shipment
+                WHERE origin_zip5 = $zip5
+                GROUP BY dest_zip5
+                ORDER BY volume DESC
+                LIMIT $limit
+            "#)
+            .bind(("zip5", zip5_owned.clone()))
+            .bind(("limit", limit))
+            .await?
+            .take(0)?
+        } else {
+            vec![]
+        };
+
+        // Inbound connections (this ZIP5 as destination)
+        let inbound_data: Vec<ConnectionData> = if direction == "both" || direction == "inbound" {
+            db.query(r#"
+                SELECT
+                    origin_zip5 as zip5,
+                    count() as volume,
+                    count(IF otd = "OnTime" THEN 1 END) as ontime_count
+                FROM shipment
+                WHERE dest_zip5 = $zip5
+                GROUP BY origin_zip5
+                ORDER BY volume DESC
+                LIMIT $limit
+            "#)
+            .bind(("zip5", zip5_owned.clone()))
+            .bind(("limit", limit))
+            .await?
+            .take(0)?
+        } else {
+            vec![]
+        };
+
+        let outbound = ConnectionStats {
+            total_destinations: outbound_data.len(),
+            total_volume: outbound_data.iter().map(|c| c.volume).sum(),
+            top_connections: outbound_data
+                .into_iter()
+                .map(|c| {
+                    let otd_rate = if c.volume > 0 {
+                        c.ontime_count as f64 / c.volume as f64
+                    } else {
+                        0.0
+                    };
+                    Connection {
+                        zip5: c.zip5.clone(),
+                        location: get_location_long(&c.zip5),
+                        volume: c.volume,
+                        otd_rate: (otd_rate * 1000.0).round() / 10.0,
+                    }
+                })
+                .collect(),
+        };
+
+        let inbound = ConnectionStats {
+            total_destinations: inbound_data.len(),
+            total_volume: inbound_data.iter().map(|c| c.volume).sum(),
+            top_connections: inbound_data
+                .into_iter()
+                .map(|c| {
+                    let otd_rate = if c.volume > 0 {
+                        c.ontime_count as f64 / c.volume as f64
+                    } else {
+                        0.0
+                    };
+                    Connection {
+                        zip5: c.zip5.clone(),
+                        location: get_location_long(&c.zip5),
+                        volume: c.volume,
+                        otd_rate: (otd_rate * 1000.0).round() / 10.0,
+                    }
+                })
+                .collect(),
+        };
+
+        Ok(LocationConnectionsResponse {
+            zip5: zip5.to_string(),
+            location: get_location_long(zip5),
+            outbound,
+            inbound,
+        })
+    }
+
+    /// Get network topology statistics - counts of nodes and edges
+    pub async fn get_network_topology(&self) -> Result<NetworkTopologyResponse> {
+        let db = db::connect(&self.db_path).await?;
+
+        // Node counts
+        let shipments: Option<i64> = db.query("SELECT count() FROM shipment GROUP ALL").await?.take("count")?;
+        let carriers: Option<i64> = db.query("SELECT count() FROM carrier GROUP ALL").await?.take("count")?;
+        let locations_zip3: Option<i64> = db.query("SELECT count() FROM location GROUP ALL").await?.take("count")?;
+        let locations_zip5: Option<i64> = db.query("SELECT count() FROM location5 GROUP ALL").await?.take("count")?;
+        let lanes_zip3: Option<i64> = db.query("SELECT count() FROM lane GROUP ALL").await?.take("count")?;
+        let lanes_zip5: Option<i64> = db.query("SELECT count() FROM lane5 GROUP ALL").await?.take("count")?;
+
+        // Edge counts (if graph edges exist)
+        let shipped_by: Option<i64> = db.query("SELECT count() FROM shipped_by GROUP ALL").await?.take("count").unwrap_or(Some(0));
+        let origin5_at: Option<i64> = db.query("SELECT count() FROM origin5_at GROUP ALL").await?.take("count").unwrap_or(Some(0));
+        let dest5_at: Option<i64> = db.query("SELECT count() FROM dest5_at GROUP ALL").await?.take("count").unwrap_or(Some(0));
+        let on_lane5: Option<i64> = db.query("SELECT count() FROM on_lane5 GROUP ALL").await?.take("count").unwrap_or(Some(0));
+        let connects5: Option<i64> = db.query("SELECT count() FROM connects5 GROUP ALL").await?.take("count").unwrap_or(Some(0));
+
+        let shipment_count = shipments.unwrap_or(0);
+        let carrier_count = carriers.unwrap_or(0);
+        let lane5_count = lanes_zip5.unwrap_or(0);
+
+        // Calculate density metrics
+        let avg_shipments_per_carrier = if carrier_count > 0 {
+            shipment_count as f64 / carrier_count as f64
+        } else {
+            0.0
+        };
+        let avg_shipments_per_lane = if lane5_count > 0 {
+            shipment_count as f64 / lane5_count as f64
+        } else {
+            0.0
+        };
+
+        // Estimate avg destinations per origin
+        #[derive(Debug, Deserialize)]
+        struct OriginDestCount {
+            origin_count: i64,
+            dest_count: i64,
+        }
+        let origin_dest: Option<OriginDestCount> = db
+            .query(r#"
+                SELECT
+                    array::len(array::distinct(origin_zip5)) as origin_count,
+                    array::len(array::distinct(dest_zip5)) as dest_count
+                FROM shipment
+                GROUP ALL
+            "#)
+            .await?
+            .take(0)?;
+
+        let avg_destinations_per_origin = match origin_dest {
+            Some(od) if od.origin_count > 0 => od.dest_count as f64 / od.origin_count as f64,
+            _ => 0.0,
+        };
+
+        Ok(NetworkTopologyResponse {
+            nodes: NodeCounts {
+                shipments: shipment_count,
+                carriers: carrier_count,
+                locations_zip3: locations_zip3.unwrap_or(0),
+                locations_zip5: locations_zip5.unwrap_or(0),
+                lanes_zip3: lanes_zip3.unwrap_or(0),
+                lanes_zip5: lane5_count,
+            },
+            edges: EdgeCounts {
+                shipped_by: shipped_by.unwrap_or(0),
+                origin5_at: origin5_at.unwrap_or(0),
+                dest5_at: dest5_at.unwrap_or(0),
+                on_lane5: on_lane5.unwrap_or(0),
+                connects5: connects5.unwrap_or(0),
+            },
+            density: NetworkDensity {
+                avg_shipments_per_carrier: (avg_shipments_per_carrier * 10.0).round() / 10.0,
+                avg_shipments_per_lane: (avg_shipments_per_lane * 100.0).round() / 100.0,
+                avg_destinations_per_origin: (avg_destinations_per_origin * 10.0).round() / 10.0,
+            },
+        })
+    }
+
+    /// Trace a shipment through the graph - carrier, origin, destination, lane
+    pub async fn trace_shipment(&self, load_id: &str) -> Result<Option<ShipmentTraceResponse>> {
+        let db = db::connect(&self.db_path).await?;
+        let load_id_owned = load_id.to_string();
+
+        #[derive(Debug, Deserialize)]
+        struct ShipmentData {
+            load_id: String,
+            carrier_mode: String,
+            otd: String,
+            actual_transit_days: i64,
+            goal_transit_days: i64,
+            actual_ship: String,
+            actual_delivery: String,
+            is_synthetic: Option<bool>,
+            carrier_ref: String,
+            origin_zip5: String,
+            dest_zip5: String,
+            lane_zip5_pair: String,
+            origin_zip: String,
+            dest_zip: String,
+        }
+
+        let shipment: Option<ShipmentData> = db
+            .query(r#"
+                SELECT
+                    load_id, carrier_mode, otd, actual_transit_days, goal_transit_days,
+                    actual_ship, actual_delivery, is_synthetic, carrier_ref,
+                    origin_zip5, dest_zip5, lane_zip5_pair,
+                    origin_zip, dest_zip
+                FROM shipment
+                WHERE load_id = $load_id
+                LIMIT 1
+            "#)
+            .bind(("load_id", load_id_owned))
+            .await?
+            .take(0)?;
+
+        match shipment {
+            Some(s) => {
+                let origin_zip3 = format!("{}xx", &s.origin_zip5[..3]);
+                let dest_zip3 = format!("{}xx", &s.dest_zip5[..3]);
+                let zip3_pair = format!("{}→{}", origin_zip3, dest_zip3);
+
+                Ok(Some(ShipmentTraceResponse {
+                    shipment: ShipmentInfo {
+                        load_id: s.load_id,
+                        carrier_mode: s.carrier_mode,
+                        otd: s.otd,
+                        actual_transit_days: s.actual_transit_days,
+                        goal_transit_days: s.goal_transit_days,
+                        ship_date: s.actual_ship,
+                        delivery_date: s.actual_delivery,
+                        is_synthetic: s.is_synthetic.unwrap_or(false),
+                    },
+                    carrier: CarrierInfo {
+                        carrier_id: s.carrier_ref.clone(),
+                        display_name: get_carrier_name(&s.carrier_ref),
+                    },
+                    origin: LocationInfo {
+                        zip5: s.origin_zip5.clone(),
+                        zip3: origin_zip3,
+                        location: get_location_long(&s.origin_zip5),
+                    },
+                    destination: LocationInfo {
+                        zip5: s.dest_zip5.clone(),
+                        zip3: dest_zip3,
+                        location: get_location_long(&s.dest_zip5),
+                    },
+                    lane: LaneInfo {
+                        zip5_pair: s.lane_zip5_pair,
+                        zip3_pair,
+                    },
+                }))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Get reachable destinations from a ZIP5 with carrier and performance info
+    pub async fn get_reachable_destinations(&self, zip5: &str, min_volume: i64, limit: usize) -> Result<ReachableDestinationsResponse> {
+        let db = db::connect(&self.db_path).await?;
+        let zip5_owned = zip5.to_string();
+
+        #[derive(Debug, Deserialize)]
+        struct DestData {
+            dest_zip5: String,
+            volume: i64,
+            carriers: Vec<String>,
+            avg_transit: f64,
+            ontime_count: i64,
+        }
+
+        let destinations: Vec<DestData> = db
+            .query(r#"
+                SELECT
+                    dest_zip5,
+                    count() as volume,
+                    array::distinct(carrier_ref) as carriers,
+                    math::mean(actual_transit_days) as avg_transit,
+                    count(IF otd = "OnTime" THEN 1 END) as ontime_count
+                FROM shipment
+                WHERE origin_zip5 = $zip5
+                GROUP BY dest_zip5
+                HAVING volume >= $min_volume
+                ORDER BY volume DESC
+                LIMIT $limit
+            "#)
+            .bind(("zip5", zip5_owned))
+            .bind(("min_volume", min_volume))
+            .bind(("limit", limit))
+            .await?
+            .take(0)?;
+
+        let mut all_carriers: Vec<String> = destinations
+            .iter()
+            .flat_map(|d| d.carriers.clone())
+            .collect();
+        all_carriers.sort();
+        all_carriers.dedup();
+
+        let reachable: Vec<ReachableDestination> = destinations
+            .into_iter()
+            .map(|d| {
+                let otd_rate = if d.volume > 0 {
+                    d.ontime_count as f64 / d.volume as f64
+                } else {
+                    0.0
+                };
+                ReachableDestination {
+                    zip5: d.dest_zip5.clone(),
+                    location: get_location_long(&d.dest_zip5),
+                    volume: d.volume,
+                    carriers: d.carriers.iter().map(|c| get_carrier_name(c)).collect(),
+                    avg_transit: (d.avg_transit * 10.0).round() / 10.0,
+                    otd_rate: (otd_rate * 1000.0).round() / 10.0,
+                }
+            })
+            .collect();
+
+        let total_destinations = reachable.len();
+        let total_carriers = all_carriers.len();
+
+        Ok(ReachableDestinationsResponse {
+            origin: zip5.to_string(),
+            origin_location: get_location_long(zip5),
+            total_destinations,
+            total_carriers,
+            destinations: reachable,
         })
     }
 }
