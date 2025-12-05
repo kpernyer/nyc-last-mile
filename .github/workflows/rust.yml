@@ -16,7 +16,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        lfs: true
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libclang-dev protobuf-compiler
+
     - name: Build
       run: cargo build --verbose
+
     - name: Run tests
       run: cargo test --verbose
