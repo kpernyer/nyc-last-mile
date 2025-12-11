@@ -1,20 +1,32 @@
-name: Rust
+name: CI
 
 on:
   push:
     branches: [ "master" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "master" ]
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
+    - name: Free disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo docker image prune --all --force
+        df -h
+
     - uses: actions/checkout@v4
       with:
         lfs: true
@@ -24,8 +36,64 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libclang-dev protobuf-compiler
 
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --release --verbose
 
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --release --verbose
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Configure Docker for GCR
+      run: gcloud auth configure-docker
+
+    - name: Build and push Docker image
+      run: |
+        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/lastmile-mcp:${{ github.ref_name }} .
+        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/lastmile-mcp:latest .
+        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/lastmile-mcp:${{ github.ref_name }}
+        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/lastmile-mcp:latest
+
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy lastmile-mcp \
+          --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/lastmile-mcp:${{ github.ref_name }} \
+          --region us-central1 \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 8080 \
+          --memory 2Gi \
+          --cpu 2 \
+          --min-instances 0 \
+          --max-instances 10 \
+          --timeout 300

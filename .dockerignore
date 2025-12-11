@@ -1,0 +1,29 @@
+# Build artifacts
+target/
+*.rlib
+*.rmeta
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Test/example output
+results/
+*.log
+
+# Raw data (large files)
+raw-data/
+
+# Local development
+.env
+.env.local

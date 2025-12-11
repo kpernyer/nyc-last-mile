@@ -28,6 +28,9 @@ hyper-util = { version = "0.1", features = ["tokio"] }
 # HTTP client for MCP server
 reqwest = { version = "0.12", features = ["json"] }
 
+# SSE streaming for HTTP MCP server
+tokio-stream = { version = "0.1", features = ["sync"] }
+
 [build-dependencies]
 tonic-build = "0.12"
 
@@ -122,3 +125,7 @@ path = "src/bin/ingest_synthetic.rs"
 [[bin]]
 name = "add_graph_edges"
 path = "src/bin/add_graph_edges.rs"
+
+[[bin]]
+name = "mcp_server_http"
+path = "src/bin/mcp_server_http.rs"

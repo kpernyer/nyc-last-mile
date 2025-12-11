@@ -1,0 +1,7 @@
+# Copy this file to terraform.tfvars and fill in your values
+# Do NOT commit terraform.tfvars to version control
+
+project_id    = "your-gcp-project-id"
+region        = "us-central1"
+custom_domain = "logistic.hey.sh"
+github_repo   = "kpernyer/nyc-last-mile"
